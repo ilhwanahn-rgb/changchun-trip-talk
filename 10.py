@@ -1,10 +1,9 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Streamlit Page Configuration for Mobile-optimized Layout
 st.set_page_config(
-    page_title="창춘 10분 중국어 회화",
-    page_icon="🇨🇳",
+    page_title="창춘 직진도 교정기 검수 & 실전 출장 중국어 (PRO Ver)",
+    page_icon="⚙️",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
@@ -12,20 +11,20 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-        /* Remove default Streamlit top/bottom paddings for app-like feeling */
         .block-container {
             padding-top: 0.5rem;
             padding-bottom: 0.5rem;
             padding-left: 0.5rem;
             padding-right: 0.5rem;
-            max-width: 540px !important;
+            max-width: 500px !important;
         }
         header {visibility: hidden;}
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         iframe {
-            border-radius: 16px;
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            border-radius: 24px;
+            box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.8);
+            border: 1px solid #1e293b;
         }
     </style>
     """,
@@ -38,12 +37,9 @@ HTML_CONTENT = """
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>창춘 10분 중국어 회화</title>
+  <title>창춘 직진도 교정기 검수 & 실전 출장 중국어 (PRO Ver)</title>
   
-  <!-- Pretendard Font -->
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-  
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
@@ -54,769 +50,601 @@ HTML_CONTENT = """
       -webkit-tap-highlight-color: transparent;
       user-select: text;
     }
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+
+    .blind-active .blind-target {
+      filter: blur(8px);
+      user-select: none;
+      transition: filter 0.2s ease;
     }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-    @keyframes subtle-fade {
-      0% { opacity: 0; transform: translateY(-8px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-    .animate-toast {
-      animation: subtle-fade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    .pb-safe {
-      padding-bottom: env(safe-area-inset-bottom, 20px);
+    .blind-active .blind-target:active,
+    .blind-active .blind-target:hover {
+      filter: blur(0);
     }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen selection:bg-sky-500 selection:text-white flex flex-col items-center">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center">
 
-  <!-- Mobile Wrapper Container -->
-  <div class="w-full max-w-lg min-h-screen flex flex-col bg-slate-950 border-x border-slate-900 pb-safe relative">
+  <div class="w-full max-w-md min-h-screen flex flex-col bg-slate-950 border-x border-slate-900 pb-safe relative">
 
-    <!-- Floating Toast Notification -->
-    <div id="toast" class="hidden fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-800/95 border border-slate-700/80 backdrop-blur-md text-emerald-300 text-xs px-4 py-2.5 rounded-full shadow-2xl flex items-center gap-2 animate-toast pointer-events-none">
-      <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-      </svg>
-      <span id="toast-text" class="font-semibold tracking-tight"></span>
+    <div id="toast" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-800/95 border border-slate-700 text-sky-300 text-xs px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 pointer-events-none transition-all">
+      <span id="toast-text" class="font-semibold"></span>
     </div>
 
-    <!-- Navigation Header -->
-    <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur-md border-b border-slate-800/80 px-4 py-3 flex items-center justify-between shadow-sm">
-      <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-sm shadow-md shadow-sky-500/10">
-          🇨🇳
+    <!-- 현장 전광판(Show-Me) 모달 -->
+    <div id="showme-modal" class="hidden fixed inset-0 z-50 bg-black flex flex-col justify-between p-6 cursor-pointer" onclick="closeShowMe()">
+      <div class="flex items-center justify-between text-slate-500 text-xs">
+        <span>📱 공장/식당 현장 보여주기 모드 (화면 터치 시 닫힘)</span>
+        <span class="text-slate-400 font-bold">✕ 닫기</span>
+      </div>
+      <div class="flex flex-col items-center justify-center my-auto text-center gap-6">
+        <div id="showme-hanzi" class="text-4xl sm:text-5xl font-extrabold text-amber-300 leading-tight tracking-wide">
+          上料机构动作顺畅吗？
+        </div>
+        <div id="showme-pinyin" class="text-lg font-mono text-emerald-400">
+          Shàngliào jīgòu dòngzuò shùnchàng ma?
+        </div>
+        <div id="showme-ko" class="text-base text-slate-300 bg-slate-900 px-4 py-2 rounded-2xl border border-slate-800">
+          "로딩 기구 동작이 원활한가요?"
+        </div>
+      </div>
+      <div class="text-center text-xs text-amber-500/80 font-mono">
+        💡 상대방 중국인 작업자에게 이 화면을 그대로 보여주세요
+      </div>
+    </div>
+
+    <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-sky-500/20 border border-sky-500/40 flex items-center justify-center text-sm font-bold text-sky-400">
+          ⚙️
         </div>
         <div>
-          <div class="flex items-center gap-1.5">
-            <span class="text-[10px] font-bold text-sky-400 tracking-wide uppercase">10-Min Biz Coach</span>
-            <span class="w-1 h-1 rounded-full bg-slate-600"></span>
-            <span class="text-[10px] text-slate-400 font-medium">창춘 출장 실전</span>
-          </div>
-          <h1 class="text-sm font-bold text-slate-100 leading-tight">창춘 10분 중국어 회화</h1>
+          <h1 class="text-sm font-bold text-slate-100 leading-tight">창춘 교정기 검수 & 현장 중국어</h1>
+          <p class="text-[10px] text-slate-400">2주 고밀도 완성 · 현장 치트키 탑재</p>
         </div>
       </div>
       
-      <button id="btn-open-toast-modal" class="px-3 py-1.5 bg-slate-800 active:bg-slate-700 border border-slate-700 text-amber-300 font-semibold text-xs rounded-xl flex items-center gap-1.5 transition-all">
-        <span>🥂</span>
-        <span>MZ 건배사</span>
-      </button>
+      <div class="flex items-center gap-1.5">
+        <button id="btn-toggle-blind" class="px-2 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700 hover:text-amber-300 transition-all flex items-center gap-1" title="한국어만 보고 먼저 말해보는 블라인드 모드">
+          <span id="blind-icon">🙈</span> <span id="blind-text" class="text-[11px]">노룩</span>
+        </button>
+
+        <div class="flex bg-slate-800/80 p-0.5 rounded-lg border border-slate-700/60 text-xs">
+          <button id="btn-mode-card" class="px-2 py-1 rounded font-bold bg-sky-500 text-white transition-all">카드</button>
+          <button id="btn-mode-list" class="px-2 py-1 rounded text-slate-400 hover:text-slate-200 transition-all">목록</button>
+        </div>
+      </div>
     </header>
 
-    <!-- Horizontal Category Filter Tabs -->
-    <div id="scenario-tabs" class="px-3 py-2.5 bg-slate-900/60 border-b border-slate-800/60 overflow-x-auto no-scrollbar flex items-center gap-1.5 shrink-0">
-      <!-- Tabs rendered by JS -->
-    </div>
+    <div id="category-tabs" class="px-3 py-2 bg-slate-900/60 border-b border-slate-800/60 overflow-x-auto no-scrollbar flex items-center gap-1.5 shrink-0"></div>
 
-    <!-- Master Controller Dashboard Card -->
-    <div class="p-4 shrink-0">
-      <div class="bg-slate-900 border border-slate-800/90 rounded-2xl p-4 shadow-lg shadow-black/40">
-        
-        <!-- Status & Countdown -->
+    <div class="p-3.5 shrink-0">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 shadow-md">
         <div class="flex items-center justify-between mb-2">
           <div class="flex items-center gap-2">
-            <span id="status-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
-            <span id="status-text" class="text-xs font-semibold text-slate-300">준비 완료 (재생 버튼을 누르세요)</span>
+            <span id="auto-status-dot" class="w-2 h-2 rounded-full bg-slate-600"></span>
+            <span id="auto-status-text" class="text-xs font-semibold text-slate-300">정지됨</span>
           </div>
-          <div id="timer-display" class="font-mono text-xl font-bold tracking-tight text-sky-400">
-            10:00
+          <div class="text-[11px] font-mono text-sky-400">
+            <span id="current-index-num">1</span> / <span id="total-count-num">44</span>
           </div>
         </div>
 
-        <!-- Progress Bar -->
-        <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mb-3">
-          <div id="progress-bar" class="bg-sky-500 h-full transition-all duration-500 ease-linear rounded-full" style="width: 0%;"></div>
-        </div>
+        <button id="btn-toggle-auto" class="w-full py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99] bg-sky-500 text-white shadow-lg shadow-sky-500/20">
+          <svg id="play-icon" class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <span id="play-btn-text">▶ 유튜브 스타일 자동 섀도잉 시작</span>
+        </button>
 
-        <!-- Meta Context Card -->
-        <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 mb-3 flex items-center justify-between">
-          <div class="pr-2">
-            <div id="scenario-place" class="text-[11px] text-slate-400 font-medium">위치 정보</div>
-            <div id="scenario-title" class="text-sm font-bold text-slate-100 mt-0.5 leading-snug">상황 타이틀</div>
+        <div class="flex items-center justify-between text-xs text-slate-400 mt-2.5 pt-2.5 border-t border-slate-800/80">
+          <div class="flex items-center gap-1">
+            <span class="text-[11px]">간격:</span>
+            <select id="interval-select" class="bg-slate-800 border border-slate-700 text-slate-300 rounded px-1.5 py-0.5 text-[11px] outline-none">
+              <option value="2500">2.5초 (빠르게)</option>
+              <option value="3500" selected>3.5초 (권장)</option>
+              <option value="4500">4.5초 (따라하기)</option>
+            </select>
           </div>
-          <span id="phase-badge" class="shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-800 text-sky-300 border border-slate-700">
-            1단계: 통으로 듣기
-          </span>
-        </div>
 
-        <!-- Action Control Buttons -->
-        <div class="flex gap-2">
-          <button id="btn-toggle-play" class="flex-1 py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99] bg-sky-500 active:bg-sky-600 text-white shadow-md shadow-sky-500/20">
-            <svg id="play-icon" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8 5v14l11-7z"/>
-            </svg>
-            <span id="btn-play-text">▶ 10분 자동 트레이닝 시작</span>
-          </button>
-
-          <button id="btn-reset" class="p-3 bg-slate-800 active:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700" title="처음부터 다시">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
-        </div>
-
-        <!-- Sub Tools: Copy All & Speed Selection -->
-        <div class="flex items-center justify-between text-xs text-slate-400 mt-3 pt-3 border-t border-slate-800/80">
-          <button id="btn-copy-all" class="flex items-center gap-1.5 text-slate-300 active:text-sky-300 transition-colors py-1 px-2 rounded-lg bg-slate-800/70 border border-slate-700/60 font-medium">
-            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-            <span>대화 4문장 전체 복사</span>
-          </button>
-
-          <div class="flex items-center gap-1.5">
-            <span class="text-[11px] text-slate-400">속도:</span>
-            <div class="flex bg-slate-800/80 p-0.5 rounded-lg border border-slate-700/70">
-              <button data-speed="0.75" class="speed-btn px-2 py-0.5 rounded text-[11px] font-semibold text-slate-400">0.75x</button>
-              <button data-speed="0.85" class="speed-btn px-2 py-0.5 rounded text-[11px] font-semibold bg-sky-500 text-white">0.85x</button>
-              <button data-speed="1.0" class="speed-btn px-2 py-0.5 rounded text-[11px] font-semibold text-slate-400">1.0x</button>
+          <div class="flex items-center gap-1">
+            <span class="text-[11px]">배속:</span>
+            <div class="flex bg-slate-800 p-0.5 rounded border border-slate-700 text-[11px]">
+              <button data-speed="0.75" class="speed-btn px-1.5 py-0.5 rounded text-slate-400">0.75x</button>
+              <button data-speed="0.85" class="speed-btn px-1.5 py-0.5 rounded bg-sky-500 text-white font-bold">0.85x</button>
+              <button data-speed="1.0" class="speed-btn px-1.5 py-0.5 rounded text-slate-400">1.0x</button>
             </div>
           </div>
         </div>
-
       </div>
     </div>
 
-    <!-- Dialogue Container -->
-    <div class="px-4 flex-1 flex flex-col">
-      <div class="flex items-center justify-between text-xs text-slate-400 mb-2 px-1">
-        <span class="font-semibold text-slate-300">실전 4문장 순차 대화</span>
-        <span id="sentence-counter" class="text-[11px] text-sky-400 font-medium">1 / 4 문장</span>
-      </div>
-
-      <div id="dialogue-list" class="flex flex-col gap-2.5">
-        <!-- Dialogue Cards rendered dynamically -->
-      </div>
-
-      <!-- Field Business Tips Card -->
-      <div class="mt-4 p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 flex flex-col gap-1.5 mb-6">
-        <div class="font-bold text-slate-100 flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.286L13 21l-2.286-6.857L5 12l5.714-2.286L13 3z" />
-          </svg>
-          현장 비즈니스 핵심 포인트
-        </div>
-        <p id="scenario-tip" class="leading-relaxed text-slate-400 select-text"></p>
-      </div>
-    </div>
-
-    <!-- MZ Toast Modal -->
-    <div id="toast-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-5 shadow-2xl flex flex-col gap-4 animate-toast">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div class="flex items-center gap-2">
-            <span class="text-lg">🎉</span>
-            <h3 class="text-sm font-bold text-slate-100">중국 MZ 인기 건배사</h3>
+    <div id="card-view-container" class="px-4 flex-1 flex flex-col justify-start">
+      <div id="flashcard" class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl flex flex-col gap-4 relative overflow-hidden transition-all">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <span id="card-category-badge" class="text-[11px] font-bold text-sky-400 bg-sky-950/60 border border-sky-800/60 px-2.5 py-1 rounded-lg">
+              교정기/검수
+            </span>
+            <button id="btn-star-card" class="p-1 rounded-lg text-slate-500 hover:text-amber-400 transition-all text-sm" title="즐겨찾기 추가/해제">
+              ★
+            </button>
           </div>
-          <button id="btn-close-toast-modal" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-400 active:text-white flex items-center justify-center text-xs font-bold">
-            ✕
+
+          <div class="flex items-center gap-1.5">
+            <button id="btn-open-showme" class="px-2 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-bold flex items-center gap-1" title="상대방에게 크게 보여주기">
+              📱 전광판
+            </button>
+            <button id="btn-copy-card" class="p-1.5 text-slate-400 hover:text-sky-300 rounded-lg bg-slate-800 border border-slate-700/60" title="문장 복사">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-slate-950/80 rounded-2xl p-4 border border-slate-800/80">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-[11px] font-bold text-amber-400 tracking-wider uppercase">Step 1. 핵심 단어</span>
+            <button id="btn-play-word" class="p-1 text-slate-400 hover:text-white rounded" title="단어 듣기">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+            </button>
+          </div>
+          <div class="flex items-baseline gap-2.5 blind-target">
+            <div id="card-word-hanzi" class="text-2xl font-bold text-slate-100">上料</div>
+            <div id="card-word-pinyin" class="text-xs font-mono text-amber-300">shàngliào</div>
+          </div>
+          <div id="card-word-meaning" class="text-xs text-slate-400 mt-1">로딩 / 자재 투입</div>
+        </div>
+
+        <div class="bg-slate-950/80 rounded-2xl p-4 border border-slate-800/80">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-[11px] font-bold text-emerald-400 tracking-wider uppercase">Step 2. 실전 1문장</span>
+            <button id="btn-play-sentence" class="p-1 text-slate-400 hover:text-white rounded" title="문장 듣기">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+            </button>
+          </div>
+          <div id="card-sentence-pinyin" class="text-xs font-mono text-emerald-300 leading-snug blind-target">Shàngliào jīgòu dòngzuò shùnchàng ma?</div>
+          <div id="card-sentence-hanzi" class="text-xl font-bold text-slate-100 mt-1 leading-snug blind-target">上料机构动作顺畅吗？</div>
+          <div id="card-sentence-meaning" class="text-sm font-semibold text-sky-300 mt-2 bg-sky-950/40 p-2 rounded-xl border border-sky-900/40">
+            "로딩 기구 동작이 원활한가요?"
+          </div>
+        </div>
+
+        <div class="flex gap-2 mt-1">
+          <button id="btn-prev-card" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700 transition-all flex items-center justify-center gap-1">
+            ◀ 이전 단어
+          </button>
+          <button id="btn-replay-card" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-slate-700 transition-all" title="다시 듣기">
+            🔄
+          </button>
+          <button id="btn-next-card" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs border border-slate-700 transition-all flex items-center justify-center gap-1">
+            다음 단어 ▶
           </button>
         </div>
+      </div>
 
-        <div id="mz-list" class="flex flex-col gap-2.5 max-h-[380px] overflow-y-auto no-scrollbar">
-          <!-- Populated by JS -->
-        </div>
-
-        <button id="btn-close-toast-modal-bottom" class="w-full py-2.5 bg-slate-800 active:bg-slate-700 text-slate-200 font-semibold rounded-xl text-xs transition-colors">
-          닫기
-        </button>
+      <div id="field-tip-box" class="mt-4 p-3.5 rounded-2xl bg-slate-900 border border-slate-800/80 text-xs text-slate-400 leading-relaxed">
+        <span class="text-amber-400 font-bold">💡 현장 엔지니어 은어 팁:</span> 
+        중국 가공 현장에서 <strong>0.01mm</strong>는 교과서식 발음 대신 <strong>"丝(sī)"</strong>라고 부릅니다. "오차가 0.02mm 났다"는 <strong>"差了两个丝(chà le liǎng ge sī)"</strong>라고 표현하세요!
       </div>
     </div>
 
+    <div id="list-view-container" class="hidden px-4 flex-1 overflow-y-auto no-scrollbar pb-6 flex flex-col gap-2.5"></div>
   </div>
 
   <script>
-    const SCENARIOS = [
-      {
-        id: 1,
-        title: "공항 도착 & 수하물 찾기",
-        emoji: "✈️",
-        place: "창춘 룽자공항 입국장",
-        tips: "교과서 '请帮帮我' 대신 '请问一下(말씀 좀 여쭙겠습니다)', '麻烦您(번거롭게 해드리겠습니다)'를 쓰세요.",
-        dialogue: [
-          { speaker: "나", hanzi: "请问一下，从首尔飞过来的航班，在几号转盘取行李？", pinyin: "Qǐngwèn yíxià, cóng Shǒu'ěr fēiguòlái de hángbān, zài jǐhào zhuànpán qǔ xíngli?", meaning: "말씀 좀 여쭙겠습니다, 서울에서 온 항공편은 몇 번 벨트에서 짐을 찾나요?" },
-          { speaker: "직원", hanzi: "您顺着左边往前走，五号转盘就是，现在已经开始出箱子了。", pinyin: "Nín shùnzhe zuǒbiān wǎng qián zǒu, wǔhào zhuànpán jiùshì, xiànzài yǐjīng kāishǐ chū xiāngzi le.", meaning: "왼쪽으로 쭉 직진하시면 5번 벨트입니다, 지금 막 캐리어가 나오기 시작했어요." },
-          { speaker: "나", hanzi: "好的！如果行李箱有破损或者没出来，要去哪里登记？", pinyin: "Hǎo de! Rúguǒ xínglixiāng yǒu pòsǔn huòzhě méi chūlái, yào qù nǎlǐ dēngjì?", meaning: "네 감사합니다! 혹시 캐리어가 파손되었거나 안 나오면 어디서 접수하나요?" },
-          { speaker: "직원", hanzi: "五号转盘旁边就有行李查询柜台，您拿登机牌过去办就可以。", pinyin: "Wǔhào zhuànpán pángbiān jiù yǒu xíngli cháxún guìtái, nín ná dēngjīpái guòqù bàn jiù kěyǐ.", meaning: "5번 벨트 바로 옆에 수하물 문의 창구가 있으니 탑승권 들고 가시면 됩니다." }
-        ]
-      },
-      {
-        id: 2,
-        title: "화장실 위치 문의 & 주변 편의시설",
-        emoji: "🚻",
-        place: "공항 / 공장 복도",
-        tips: "북방/동북 지역은 '在哪里(zài nǎlǐ)'보다 '在哪儿 (zài nǎr)'이 훨씬 입에 착 붙습니다.",
-        dialogue: [
-          { speaker: "나", hanzi: "不好意思，麻烦问一下，最近的洗手间在哪儿？", pinyin: "Bù hǎoyìsi, máfan wèn yíxià, zuìjìn de xǐshǒujiān zài nǎr?", meaning: "죄송하지만 실례합니다, 가장 가까운 화장실이 어디에 있나요?" },
-          { speaker: "직원", hanzi: "顺着走廊一直往前走，到底往右拐就看到了。", pinyin: "Shùnzhe zǒuláng yìzhí wǎng qián zǒu, dàodǐ wǎng yòuguǎi jiù kàndào le.", meaning: "복도 따라 쭉 직진하시고 끝까지 가서 우회전하시면 바로 보입니다." },
-          { speaker: "나", hanzi: "好的谢谢！请问洗手间旁边有自动售货机或者便利店吗？", pinyin: "Hǎo de xièxie! Qǐngwèn xǐshǒujiān pángbiān yǒu zìdòng shòuhuòjī huòzhě biànlìdiàn ma?", meaning: "감사합니다! 혹시 화장실 옆에 음료 자판기나 편의점도 있을까요?" },
-          { speaker: "직원", hanzi: "有的，就在拐角处有一台机器，微信和支付宝都能扫。", pinyin: "Yǒu de, jiù zài guǎijiǎochù yǒu yì tái jīqì, Wēixìn hé Zhīfùbǎo dōu néng sǎo.", meaning: "네 있습니다, 코너에 기계 한 대 있고 위챗페이랑 알리페이 모두 결제됩니다." }
-        ]
-      },
-      {
-        id: 3,
-        title: "픽업 파트너 조우 & 차내 이동 안부",
-        emoji: "🚗",
-        place: "창춘 공항 주차장 & 이동 차량 안",
-        tips: "파트너에게 '辛苦您特意跑一趟(일부러 걸음해 주셔서 감사합니다)'를 건네면 즉시 친밀해집니다.",
-        dialogue: [
-          { speaker: "나", hanzi: "王经理，辛苦您特意跑一趟来接我！", pinyin: "Wáng jīnglǐ, xīnkǔ nín tèyì pǎo yí tàng lái jiē wǒ!", meaning: "왕 매니저님, 일부러 먼 길 걸음해 마중 나와주셔서 정말 감사합니다!" },
-          { speaker: "파트너", hanzi: "哪里哪里！一路飞过来辛苦啦！行李放后备箱，咱们上车暖和暖和。", pinyin: "Nǎlǐ nǎlǐ! Yílù fēi guòlái xīnkǔ la! Xíngli fàng hòubèixiāng, zánmen shàngchē nuǎnhuo nuǎnhuo.", meaning: "별말씀을요! 비행기 타고 오시느라 고생하셨습니다! 짐은 트렁크에 넣고 차에서 몸 좀 녹이시죠." },
-          { speaker: "나", hanzi: "路上挺顺利的，长春这天气比我想象的还要舒服，挺凉爽的！", pinyin: "Lùshang tǐng shùnlì de, Chángchūn zhè tiānqì bǐ wǒ xiǎngxiàng de hái yào shūfu, tǐng liángshuǎng de!", meaning: "비행은 아주 순조로웠습니다. 창춘 날씨가 생각했던 것보다 훨씬 상쾌하고 시원하네요!" },
-          { speaker: "파트너", hanzi: "哈哈今天刚好赶上好天气！从机场到厂里大概四十分钟，累的话您先眯会儿。", pinyin: "Hāhā jīntiān gānghǎo gǎnshang hǎo tiānqì! Cóng jīchǎng dào chǎnglǐ dàgài sìshí fēnzhōng, lèi dehuà nín xiān mī huìr.", meaning: "하하 오늘 딱 좋은 날씨에 맞춰 오셨네요! 공항에서 공장까지 약 40분 걸리니 피곤하시면 눈 좀 붙이세요." }
-        ]
-      },
-      {
-        id: 4,
-        title: "공장 도착 후 설비 검수 직전 현황 파악",
-        emoji: "⚙️",
-        place: "생산 공장 현장 (车间)",
-        tips: "현장 엔지니어들과는 '咱们(너와 나 한 팀)'과 '开机(가동)', '验收(검수)' 표현이 핵심입니다.",
-        dialogue: [
-          { speaker: "나", hanzi: "李工，今天咱们要验的那台设备，目前准备情况怎么样？", pinyin: "Lǐ gōng, jīntiān zánmen yào yàn de nà tái shèbèi, mùqián zhǔnbèi qíngkuàng zěnmeyàng?", meaning: "리 엔지니어님, 오늘 저희가 검수할 그 장비의 현재 준비 상태는 어떤가요?" },
-          { speaker: "엔지니어", hanzi: "设备昨天已经通电预热了，空载跑了一宿，量具和图纸都在现场备齐了。", pinyin: "Shèbèi zuótiān yǐjīng tōngdiàn yùrè le, kōngzǎi pǎo le yì xiǔ, liángjù hé túzhǐ dōu zài xiànchǎng bèiqí le.", meaning: "장비는 어제 이미 전원 넣어 예열했고 밤새 무부하로 돌렸습니다. 계측기와 도면도 현장에 다 준비되었습니다." },
-          { speaker: "나", hanzi: "太好了！咱们先对一下关键尺寸，然后再看带载试运行怎么样？", pinyin: "Tài hǎo le! Zánmen xiān duì yíxià guānjiàn chǐcun, ránhòu zài kàn dàizǎi shìyùnxíng zěnmeyàng?", meaning: "좋습니다! 저희 먼저 핵심 치수부터 대조해 보고 나서 부하 시운전을 보는 건 어떨까요?" },
-          { speaker: "엔지니어", hanzi: "没问题！全按您的检测标准来，发现任何细节问题咱们现场随时改。", pinyin: "Méi wèntí! Quán àn nín de jiǎncè biāozhǔn lái, fāxiàn rènhé xìjié wèntí zánmen xiànchǎng suíshí gǎi.", meaning: "문제없습니다! 대표님 검사 기준대로 전적으로 진행하시고, 세부 문제점은 현장에서 언제든 수정하시죠." }
-        ]
-      },
-      {
-        id: 5,
-        title: "식사 만찬 & 센스 있는 건배 에티켓",
-        emoji: "🥂",
-        place: "창춘 현지 식당 만찬장",
-        tips: "주량이 약할 땐 '以茶代酒(차로 대신)'를 말하며 '酒杯一碰，黄金乱蹦!'을 띄우면 분위기 최고입니다.",
-        dialogue: [
-          { speaker: "나", hanzi: "这锅包肉酸甜酥脆，外焦里嫩，真是名不虚传！", pinyin: "Zhè guōbāoròu suāntián sūcuì, wàijiāo lǐnèn, zhēn shì míng bù xū chuán!", meaning: "이 꿔바오로우 새콤달콤 바삭하고 겉바속촉이네요. 과연 명불허전입니다!" },
-          { speaker: "호스트", hanzi: "喜欢就多吃点！尝尝东北特色！年轻人带个头，咱们碰一杯怎么样？", pinyin: "Xǐhuan jiù duō chī diǎn! Chángchang Dōngběi tèsè! Niánqīngrén dài ge tóu, zánmen pèng yì bēi zěnmeyàng?", meaning: "입에 맞으시면 많이 드세요! 동북 특색 맛보시고, 젊은 분이 한마디 띄워주시죠, 다 같이 한잔 칠까요?" },
-          { speaker: "나", hanzi: "李总，我酒量真不行，今天以茶代酒敬您！酒杯一碰，黄金乱蹦！祝咱们合作愉快！", pinyin: "Lǐ zǒng, wǒ jiǔliàng zhēn bùxíng, jīntiān yǐ chá dài jiǔ jìng nín! Jiǔbēi yí pèng, huángjīn luàn bèng! Zhù zánmen hézuò yúkuài!", meaning: "대표님, 제가 주량이 약해서 오늘은 차로 술을 대신해 올립니다! 잔을 치니 황금이 와르르! 원활한 협력을 위해!" },
-          { speaker: "호스트", hanzi: "哈哈！这词儿太敞亮了！借您吉言，不掉头发只搞钱，干杯！", pinyin: "Hāhā! Zhè cír tài chǎngliàng le! Jiè nín jíyán, bù diào tóufa zhǐ gǎo qián, gānbēi!", meaning: "하하! 멘트가 정말 시원시원하니 기분 최고네요! 덕담대로 탈모 없이 돈만 왕창 법시다, 건배!" }
-        ]
-      },
-      {
-        id: 6,
-        title: "식당 실전 주문 & 취향 요청",
-        emoji: "🍲",
-        place: "동북 요리 식당",
-        tips: "직원에게 메뉴를 물을 땐 '咱们家招牌菜', 고수 뺄 땐 '千万别放香菜'를 쓰세요.",
-        dialogue: [
-          { speaker: "나", hanzi: "服务员，请问咱们家有啥招牌菜？推荐两道呗。", pinyin: "Fúwùyuán, qǐngwèn zánmen jiā yǒu shà zhāopáicài? Tuījiàn liǎng dào bei.", meaning: "직원분, 이 집 대표 메뉴가 뭐예요? 두 개 정도 추천 좀 해주세요." },
-          { speaker: "직원", hanzi: "咱们家锅包肉和大拉皮桌桌必点！两位能吃辣不？", pinyin: "Zánmen jiā guōbāoròu hé dàlāpí zhuōzhuō bìdiǎn! Liǎng wèi néng chī là bu?", meaning: "저희 집 꿔바오로우랑 넓적당면무침은 테이블마다 필수입니다! 두 분 매운 건 드시나요?" },
-          { speaker: "나", hanzi: "做微辣就可以，另外千万别放香菜，再来两瓶常温矿泉水。", pinyin: "Zuò wēilà jiù kěyǐ, lìngwài qiānwàn bié fàng xiāngcài, zài lái liǎng píng chángwēn kuàngquánshuǐ.", meaning: "살짝만 맵게 해주시고, 고수는 절대 넣지 마세요. 그리고 상온 생수 두 병 부탁합니다." },
-          { speaker: "직원", hanzi: "好的记下了，微辣不放香菜常温水，马上给您安排下单！", pinyin: "Hǎo de jìxià le, wēilà bú fàng xiāngcài chángwēn shuǐ, mǎshàng gěi nín ānpái xiàdān!", meaning: "네 적었습니다. 살짝 맵게, 고수 빼고, 상온 미온수, 지금 바로 주문 넣겠습니다!" }
-        ]
-      },
-      {
-        id: 7,
-        title: "식사 마무리 & 귀가 배웅 스몰토크",
-        emoji: "☕",
-        place: "식당 입구 & 택시 승차장",
-        tips: "계산해 준 파트너에겐 '今天太破费了(너무 무리하셨습니다)', 배웅 만류엔 '您快留步(들어가세요)'가 기본입니다.",
-        dialogue: [
-          { speaker: "나", hanzi: "今天李总太破费了！吃得特别好，真的非常感谢！", pinyin: "Jīntiān Lǐ zǒng tài pòfèi le! Chī de tèbié hǎo, zhēn de fēicháng gǎnxiè!", meaning: "오늘 이 대표님께서 너무 무리하셨습니다! 정말 맛있게 잘 먹었습니다, 감사합니다!" },
-          { speaker: "호스트", hanzi: "哪里哪里，粗茶淡饭招待不周！车已经在门口等了，我送你们回酒店吧。", pinyin: "Nǎlǐ nǎlǐ, cūchádànfàn zhāodài bùzhōu! Chē yǐjīng zài ménkǒu děng le, wǒ sòng nǐmen huí jiǔdiàn ba.", meaning: "별말씀을요, 소박한 음식이라 대접이 변변찮았습니다! 차가 문 앞에 대기 중이니 호텔까지 모셔다드릴게요." },
-          { speaker: "나", hanzi: "李总您快留步，千万不用送了！路上慢点儿，咱们明天厂里见。", pinyin: "Lǐ zǒng nín kuài liúbù, qiānwàn bú yòng sòng le! Lùshang màndiǎnr, zánmen míngtiān chǎnglǐ jiàn.", meaning: "대표님 어서 들어가세요, 절대 배웅 안 나오셔도 됩니다! 조심히 가시고 내일 공장에서 뵙겠습니다." },
-          { speaker: "호스트", hanzi: "好嘞！那你们到了酒店发个微信报平安，明天上午九点咱们厂里见！", pinyin: "Hǎolei! Nà nǐmen dào le jiǔdiàn fā ge Wēixìn bào píng'ān, míngtiān shàngwǔ jiǔdiǎn zánmen chǎnglǐ jiàn!", meaning: "좋습니다! 그럼 호텔 도착하시면 안전하다고 위챗 하나 남겨주시고, 내일 오전 9시에 공장에서 뵙죠!" }
-        ]
-      },
-      {
-        id: 8,
-        title: "편의점 결제 & 도시락 데우기",
-        emoji: "🏪",
-        place: "편의점 (便利店)",
-        tips: "중국 편의점은 봉투(塑料袋) 유상 판매이며, 결제 시 '我扫你(내가 찍기)'나 '你扫我(보여주기)', 데우기는 '加热'를 씁니다.",
-        dialogue: [
-          { speaker: "직원", hanzi: "你好，欢迎光临！需要塑料袋吗？", pinyin: "Nǐ hǎo, huānyíng guānglín! Xūyào sùliàodài ma?", meaning: "안녕하세요, 어서오세요! 비닐봉투 필요하신가요?" },
-          { speaker: "나", hanzi: "要一个中号的，另外这个便当麻烦帮我加热一下。", pinyin: "Yào yí ge zhōnghào de, lìngwài zhège biàndang máfan bāng wǒ jiārè yíxià.", meaning: "중간 크기 하나 주시고, 이 도시락 전자레인지에 좀 데워주세요." },
-          { speaker: "직원", hanzi: "好的稍等！加热大概一分钟。请出示付款码，我扫您。", pinyin: "Hǎo de shāoděng! Jiārè dàgài yì fēnzhōng. Qǐng chūshì fùkuǎnmǎ, wǒ sǎo nín.", meaning: "네 잠시만요! 데우는 데 1분 정도 걸립니다. 결제 바코드 보여주시면 제가 찍겠습니다." },
-          { speaker: "나", hanzi: "好的，给您扫。顺便麻烦打一张小票，谢谢！", pinyin: "Hǎo de, gěi nín sǎo. Shùnbiàn máfan dǎ yì zhāng xiǎopiào, xièxie!", meaning: "네, 찍어주세요. 참, 영수증도 한 장 출력 부탁드립니다, 감사합니다!" }
-        ]
-      },
-      {
-        id: 9,
-        title: "호텔 체크인 & 조식·와이파이",
-        emoji: "🏨",
-        place: "호텔 로비 프런트 (前台)",
-        tips: "호텔 체크인 시 '办理入住', 보증금 '押金(체크아웃 시 자동 환불)', 룸키 '房卡', 조식 '早餐'만 알면 완벽합니다.",
-        dialogue: [
-          { speaker: "나", hanzi: "你好，我预订了大床房，麻烦办理一下入住。", pinyin: "Nǐ hǎo, wǒ yùdìng le dàchuángfáng, máfan bànlǐ yíxià rùzhù.", meaning: "안녕하세요, 킹베드룸 예약했는데요, 체크인 좀 부탁드립니다." },
-          { speaker: "직원", hanzi: "请出示一下护照，押金需要交两百，退房时原路退回。", pinyin: "Qǐng chūshì yíxià hùzhào, yājīn xūyào jiāo liǎngbǎi, tuìfáng shí tuìhuí.", meaning: "여권 보여주세요. 보증금은 200위안이며 체크아웃 시 원래 결제 수단으로 환불됩니다." },
-          { speaker: "나", hanzi: "好的，微信扫给您。请问早餐在几楼？几点开始？", pinyin: "Hǎo de, Wēixìn sǎo gěi nín. Qǐngwèn zǎocān zài jǐ lóu? Jǐdiǎn kāishǐ?", meaning: "네, 위챗으로 결제할게요. 조식은 몇 층이고 몇 시부터 시작하나요?" },
-          { speaker: "직원", hanzi: "早餐在二楼，早上七点到九点半，凭房卡直接用餐就可以。", pinyin: "Zǎocān zài èrlóu, zǎoshang qīdiǎn dào jiǔdiǎn bàn, píng fángkǎ zhíjiē yòngcān jiù kěyǐ.", meaning: "조식은 2층이고 오전 7시부터 9시 반까지이며 룸카드로 바로 식사하시면 됩니다." }
-        ]
-      },
-      {
-        id: 10,
-        title: "택시 탑승 & 목적지 하차 요청",
-        emoji: "🚕",
-        place: "길거리 / 택시·디디 승차",
-        tips: "디디나 택시 탈 땐 전화번호 뒷자리 '手机尾号'를 확인하며, 내릴 때 갓길 정차는 '靠边停', 트렁크는 '后备箱'입니다.",
-        dialogue: [
-          { speaker: "기사", hanzi: "师傅接单了，手机尾号是四三二一吗？去净月潭对吧？", pinyin: "Shīfu jiēdān le, shǒujī wěihào shì sì sān èr yī ma? Qù Jìngyuètán duì ba?", meaning: "기사입니다. 폰 번호 뒷자리가 4321 맞으신가요? 정월담 가시는 것 맞죠?" },
-          { speaker: "나", hanzi: "对的师傅！咱们走高架桥吗？路上大概多久能到？", pinyin: "Duì de shīfu! Zánmen zǒu gāojiàqiáo ma? Lùshang dàgài duōjiǔ néng dào?", meaning: "네 맞습니다 기사님! 고가도로로 가나요? 도착까지 대략 얼마나 걸릴까요?" },
-          { speaker: "기사", hanzi: "走高架快，不堵车二十来分钟就到，车里热的话我开空调。", pinyin: "Zǒu gāojià kuài, bù dǔchē èrshí lái fēnzhōng jiù dào, chēlǐ rè dehuà wǒ kāi kōngtiáo.", meaning: "고가가 빠릅니다. 차 안 막히면 20여 분이면 도착해요. 차 안이 더우시면 에어컨 틀어드릴게요." },
-          { speaker: "나", hanzi: "好的谢谢！到了麻烦在门口靠边停一下，我拿一下后备箱行李。", pinyin: "Hǎo de xièxie! Dào le máfan zài ménkǒu kàobiān tíng yíxià, wǒ ná yíxià hòubèixiāng xíngli.", meaning: "감사합니다! 도착하면 입구 갓길에 세워주세요, 트렁크에서 짐 좀 꺼내겠습니다." }
-        ]
-      }
+    const VOCAB_DATA = [
+      { id: 1, cat: "교정기/검수", word: "校直机", pinyin: "xiàozhíjī", wordKo: "직진도 교정기", senZh: "这台棒料校直机准备好了吗？", senPy: "Zhè tái bàngliào xiàozhíjī zhǔnbèi hǎo le ma?", senKo: "이 환봉 교정기는 준비 완료되었나요?" },
+      { id: 2, cat: "교정기/검수", word: "棒料", pinyin: "bàngliào", wordKo: "봉재 / 환봉", senZh: "先拿几根测试棒料过来吧。", senPy: "Xiān ná jǐ gēn cèshì bàngliào guòlai ba.", senKo: "먼저 테스트용 봉 몇 개 가져와 보세요." },
+      { id: 3, cat: "교정기/검수", word: "上料", pinyin: "shàngliào", wordKo: "로딩 / 자재 투입", senZh: "上料机构动作顺畅吗？", senPy: "Shàngliào jīgòu dòngzuò shùnchàng ma?", senKo: "로딩 기구 동작이 원활한가요?" },
+      { id: 4, cat: "교정기/검수", word: "顺畅", pinyin: "shùnchàng", wordKo: "원활하다 / 순조롭다", senZh: "确认一下上料动作是否顺畅。", senPy: "Quèrèn yíxià shàngliào dòngzuò shìfǒu shùnchàng.", senKo: "로딩 동작이 원활한지 확인해 주십시오." },
+      { id: 5, cat: "교정기/검수", word: "卡料", pinyin: "kǎliào", wordKo: "자재 걸림 / 잼", senZh: "连续上料时有没有卡料现象？", senPy: "Liánxù shàngliào shí yǒu méiyǒu kǎliào xiànxiàng?", senKo: "연속 로딩 시 자재 걸림 현상이 있나요?" },
+      { id: 6, cat: "교정기/검수", word: "旋转", pinyin: "xuánzhuǎn", wordKo: "회전시키다", senZh: "把棒料旋转一周测一下。", senPy: "Bǎ bàngliào xuánzhuǎn yìzhōu cè yíxià.", senKo: "봉을 한 바퀴 회전시켜서 측정해 보시죠." },
+      { id: 7, cat: "교정기/검수", word: "直线度", pinyin: "zhíxiàndù", wordKo: "직진도", senZh: "旋转时直线度跳动多少？", senPy: "Xuánzhuǎn shí zhíxiàndù tiàodòng duōshao?", senKo: "회전 시 직진도 런아웃(흔들림)이 얼마나 나오나요?" },
+      { id: 8, cat: "교정기/검수", word: "跳动", pinyin: "tiàodòng", wordKo: "런아웃 / 흔들림 편차", senZh: "中间位置的跳动有点大。", senPy: "Zhōngjiān wèizhi de tiàodòng yǒudiǎnr dà.", senKo: "가운데 지점 흔들림이 좀 큽니다." },
+      { id: 9, cat: "교정기/검수", word: "测头", pinyin: "cètóu", wordKo: "측정 프로브 / 센서", senZh: "激光测头的位置校准过了吗？", senPy: "Jīguāng cètóu de wèizhi jiàozhǔn guò le ma?", senKo: "레이저 측정 프로브 위치는 보정된 상태인가요?" },
+      { id: 10, cat: "교정기/검수", word: "合格", pinyin: "hégé", wordKo: "합격 / 양품 판정", senZh: "系统判定合格的基准是多少？", senPy: "Xìtǒng pàndìng hégé de jīzhǔn shì duōshao?", senKo: "시스템에서 합격으로 판정하는 기준값이 얼마인가요?" },
+      { id: 11, cat: "교정기/검수", word: "不良", pinyin: "bùliáng", wordKo: "불량 / NG", senZh: "如果判定为不良，会自动校直吗？", senPy: "Rúguǒ pàndìng wéi bùliáng, huì zìdòng xiàozhí ma?", senKo: "불량으로 판정되면 자동으로 교정 작업에 들어가나요?" },
+      { id: 12, cat: "교정기/검수", word: "丝", pinyin: "sī", wordKo: "0.01mm (현장 절대은어)", senZh: "直线度跳动差了两个丝。", senPy: "Zhíxiàndù tiàodòng chà le liǎng ge sī.", senKo: "직진도 런아웃 편차가 0.02mm(2사) 납니다." },
+      { id: 13, cat: "교정기/검수", word: "公差", pinyin: "gōngchā", wordKo: "공차 (Tolerance)", senZh: "这批棒料的直线度公差是多少？", senPy: "Zhè pī bàngliào de zhíxiàndù gōngchā shì duōshao?", senKo: "이 환봉 배치의 직진도 공차는 얼마인가요?" },
+      { id: 14, cat: "교정기/검수", word: "压下量", pinyin: "yàxiàliàng", wordKo: "압하량 / 프레스 가압량", senZh: "校直时的压下量和压力能调吗？", senPy: "Xiàozhí shí de yàxiàliàng hé yālì néng tiáo ma?", senKo: "교정 시 프레스 가압량과 압력 조절이 가능한가요?" },
+      { id: 15, cat: "교정기/검수", word: "下料", pinyin: "xiàliào", wordKo: "언로딩 / 자재 배출", senZh: "校直完成后下料是否顺畅？", senPy: "Xiàozhí wánchéng hòu xiàliào shìfǒu shùnchàng?", senKo: "교정 완료 후 언로딩 배출이 원활한가요?" },
+      { id: 16, cat: "교정기/검수", word: "分选", pinyin: "fēnxuǎn", wordKo: "분리 배출 / 선별", senZh: "良品和不良品能自动分选吗？", senPy: "Liángpǐn hé bùliángpǐn néng zìdòng fēnxuǎn ma?", senKo: "양품과 불량품이 자동으로 분류 배출되나요?" },
+      { id: 17, cat: "교정기/검수", word: "划伤", pinyin: "huáshāng", wordKo: "스크래치 / 긁힘", senZh: "上下料过程中棒料表面有划伤吗？", senPy: "Shàngxiàliào guòchéng zhōng bàngliào biǎomiàn yǒu huáshāng ma?", senKo: "로딩/언로딩 과정에서 봉 표면에 스크래치가 생기나요?" },
+      { id: 18, cat: "교정기/검수", word: "超标", pinyin: "chāobiāo", wordKo: "기준치 초과", senZh: "校直后的残留跳动还是超标。", senPy: "Xiàozhí hòu de cánliú tiàodòng háishì chāobiāo.", senKo: "교정 후 남은 흔들림이 여전히 기준치를 초과합니다." },
+      { id: 19, cat: "교정기/검수", word: "调机", pinyin: "tiáojī", wordKo: "설비 파라미터 세팅", senZh: "麻烦李工现场微调一下参数。", senPy: "Máfan Lǐ gōng xiànchǎng wēitiáo yíxià cānshù.", senKo: "엔지니어님, 현장에서 파라미터 미세 조정 좀 부탁드립니다." },
+
+      { id: 20, cat: "식당/주문", word: "菜单", pinyin: "càidān", wordKo: "메뉴판", senZh: "服务员，麻烦拿一下菜单。", senPy: "Fúwùyuán, máfan ná yíxià càidān.", senKo: "직원분, 메뉴판 좀 가져다주세요." },
+      { id: 21, cat: "식당/주문", word: "点菜", pinyin: "diǎncài", wordKo: "주문하다", senZh: "我们准备好点菜了。", senPy: "Wǒmen zhǔnbèi hǎo diǎncài le.", senKo: "저희 주문할 준비 됐습니다." },
+      { id: 22, cat: "식당/주문", word: "稍等", pinyin: "shāoděng", wordKo: "잠시 기다리다", senZh: "稍等一下，我们还没选好。", senPy: "Shāoděng yíxià, wǒmen hái méi xuǎnhǎo.", senKo: "잠시만요, 아직 다 못 골랐어요." },
+      { id: 23, cat: "식당/주문", word: "筷子", pinyin: "kuàizi", wordKo: "젓가락", senZh: "麻烦再拿一双筷子。", senPy: "Máfan zài ná yì shuāng kuàizi.", senKo: "젓가락 한 벌만 더 가져다주세요." },
+      { id: 24, cat: "식당/주문", word: "米饭", pinyin: "mǐfàn", wordKo: "공깃밥", senZh: "先来两碗米饭吧。", senPy: "Xiān lái liǎng wǎn mǐfàn ba.", senKo: "먼저 공깃밥 두 공기 주세요." },
+      { id: 25, cat: "식당/주문", word: "加水", pinyin: "jiāshuǐ", wordKo: "물 추가 / 물 채우기", senZh: "服务员，这边加一下水。", senPy: "Fúwùyuán, zhèbiān jiā yíxià shuǐ.", senKo: "직원분, 여기 물 좀 더 채워주세요." },
+      { id: 26, cat: "식당/주문", word: "催菜", pinyin: "cuīcài", wordKo: "음식 재촉하다", senZh: "麻烦帮我们催一下菜。", senPy: "Máfan bāng wǒmen cuī yíxià cài.", senKo: "음식 좀 빨리 나오게 재촉 부탁드려요." },
+      { id: 27, cat: "식당/주문", word: "微辣", pinyin: "wēilà", wordKo: "살짝 매운맛", senZh: "做微辣就可以了。", senPy: "Zuò wēilà jiù kěyǐ le.", senKo: "살짝만 맵게 해주시면 돼요." },
+      { id: 28, cat: "식당/주문", word: "香菜", pinyin: "xiāngcài", wordKo: "고수", senZh: "千万别放香菜。", senPy: "Qiānwàn bié fàng xiāngcài.", senKo: "고수는 절대 넣지 마세요." },
+
+      { id: 29, cat: "류리ON생활어휘", word: "我扫您", pinyin: "wǒ sǎo nín", wordKo: "제가 찍을게요 (QR)", senZh: "我扫您还是您扫我？", senPy: "Wǒ sǎo nín háishì nín sǎo wǒ?", senKo: "제가 찍을까요, 아니면 찍으시나요?" },
+      { id: 30, cat: "류리ON생활어휘", word: "充电宝", pinyin: "chōngdiànbǎo", wordKo: "보조배터리", senZh: "这儿有充电宝可以借吗？", senPy: "Zhèr yǒu chōngdiànbǎo kěyǐ jiè ma?", senKo: "여기 보조배터리 대여할 수 있나요?" },
+      { id: 31, cat: "류리ON생활어휘", word: "常温", pinyin: "chángwēn", wordKo: "상온 (미지근한 것)", senZh: "要一瓶常温矿泉水。", senPy: "Yào yì píng chángwēn kuàngquánshuǐ.", senKo: "상온 생수로 한 병 주세요." },
+      { id: 32, cat: "류리ON생활어휘", word: "纸巾", pinyin: "zhǐjīn", wordKo: "휴지 / 냅킨", senZh: "服务员，麻烦拿一包纸巾。", senPy: "Fúwùyuán, máfan ná yì bāo zhǐjīn.", senKo: "직원분, 휴지 한 팩만 가져다주세요." },
+      { id: 33, cat: "류리ON생활어휘", word: "打包", pinyin: "dǎbāo", wordKo: "포장하다 / 테이크아웃", senZh: "剩下的菜帮我们打包一下。", senPy: "Shèngxià de cài bāng wǒmen dǎbāo yíxià.", senKo: "남은 음식 포장 좀 해주세요." },
+      { id: 34, cat: "류리ON생활어휘", word: "小票", pinyin: "xiǎopiào", wordKo: "영수증", senZh: "顺便打一张小票，谢谢！", senPy: "Shùnbiàn dǎ yì zhāng xiǎopiào, xièxie!", senKo: "영수증도 한 장 뽑아주세요, 감사합니다!" },
+      { id: 35, cat: "류리ON생활어휘", word: "尾号", pinyin: "wěihào", wordKo: "번호 뒷자리 (디디/택시)", senZh: "手机尾号是四三二一。", senPy: "Shǒujī wěihào shì sì sān èr yī.", senKo: "휴대폰 번호 뒷자리는 4321입니다." },
+      { id: 36, cat: "류리ON생활어휘", word: "靠边停", pinyin: "kàobiān tíng", wordKo: "갓길에 정차하다", senZh: "师傅，在门口靠边停一下。", senPy: "Shīfu, zài ménkǒu kàobiān tíng yíxià.", senKo: "기사님, 입구 갓길에 세워주세요." },
+
+      { id: 37, cat: "만찬/비즈니스", word: "招牌菜", pinyin: "zhāopáicài", wordKo: "대표 메뉴 / 간판 요리", senZh: "先来一份正宗的锅包肉吧！", senPy: "Xiān lái yí fèn zhèngzōng de guōbāoròu ba!", senKo: "먼저 정통 꿔바오로우 하나 주세요!" },
+      { id: 38, cat: "만찬/비즈니스", word: "以茶代酒", pinyin: "yǐ chá dài jiǔ", wordKo: "차로 술을 대신하다", senZh: "我以茶代酒敬您一杯！", senPy: "Wǒ yǐ chá dài jiǔ jìng nín yì bēi!", senKo: "차로 술을 대신해 한잔 올립니다!" },
+      { id: 39, cat: "만찬/비즈니스", word: "黄金乱蹦", pinyin: "huángjīn luàn bèng", wordKo: "황금이 튀다 (MZ건배)", senZh: "酒杯一碰，黄金乱蹦！", senPy: "Jiǔbēi yí pèng, huángjīn luàn bèng!", senKo: "술잔을 딱 부딪치니 황금이 와르르!" },
+      { id: 40, cat: "만찬/비즈니스", word: "结账", pinyin: "jiézhàng", wordKo: "계산하다", senZh: "麻烦结一下账。", senPy: "Máfan jié yíxià zhàng.", senKo: "계산 부탁드립니다." },
+      { id: 41, cat: "만찬/비즈니스", word: "破费", pinyin: "pòfèi", wordKo: "무리하다 / 비용을 쓰다", senZh: "今天李总太破费了，非常感谢！", senPy: "Jīntiān Lǐ zǒng tài pòfèi le, fēicháng gǎnxiè!", senKo: "오늘 이 대표님께서 너무 무리하셨습니다, 감사합니다!" },
+      { id: 42, cat: "만찬/비즈니스", word: "留步", pinyin: "liúbù", wordKo: "배웅을 멈추다", senZh: "您快留步，千万不用送了！", senPy: "Nín kuài liúbù, qiānwàn bú yòng sòng le!", senKo: "대표님 어서 들어가세요, 배웅 나오지 마세요!" },
+      { id: 43, cat: "만찬/비즈니스", word: "特意", pinyin: "tèyì", wordKo: "일부러 / 특별히", senZh: "辛苦您特意跑一趟来接我！", senPy: "Xīnkǔ nín tèyì pǎo yí tàng lái jiē wǒ!", senKo: "일부러 마중 나와주셔서 감사합니다!" },
+      { id: 44, cat: "만찬/비즈니스", word: "顺利", pinyin: "shùnlì", wordKo: "순조롭다", senZh: "航班非常顺利，一点都不累。", senPy: "Hángbān fēicháng shùnlì, yìdiǎn dōu bú lèi.", senKo: "비행은 아주 순조로웠고 전혀 피곤하지 않아요." }
     ];
 
-    const MZ_TOASTS = [
-      { hanzi: "酒杯一碰，黄金乱蹦！", pinyin: "Jiǔbēi yí pèng, huángjīn luàn bèng!", meaning: "술잔을 딱 부딪치니 황금이 와르르 튄다!", tag: "MZ 대세 라임" },
-      { hanzi: "酒杯一响，黄金万两！干杯！", pinyin: "Jiǔbēi yì xiǎng, huángjīn wàn liǎng! Gānbēi!", meaning: "잔 소리 한 번에 황금 만 냥! 건배!", tag: "비즈니스 대박" },
-      { hanzi: "祝咱们：不掉头发，只搞钱！", pinyin: "Zhù zánmen: bù diào tóufa, zhǐ gǎo qián!", meaning: "우리 모두 탈모 없이 돈만 왕창 법시다!", tag: "직장인 밈" },
-      { hanzi: "祝我们：顺风顺水，一路生花！", pinyin: "Zhù wǒmen: shùnfēng shùnshuǐ, yílù shēnghuā!", meaning: "순풍에 돛 단 듯, 꽃길만 펼쳐지길!", tag: "우아한 덕담" }
-    ];
+    const CATEGORIES = ["전체", "★즐겨찾기", "교정기/검수", "식당/주문", "류리ON생활어휘", "만찬/비즈니스"];
 
-    // State Variables
-    let currentScenarioIdx = 0;
-    let isPlaying = false;
-    let remainingSeconds = 600;
-    let trainingPhase = 0;
-    let activeSentenceIdx = 0;
+    let currentCategory = "전체";
+    let filteredList = [...VOCAB_DATA];
+    let currentIndex = 0;
+    let isAutoPlaying = false;
     let audioSpeed = 0.85;
-    let timerInterval = null;
-    let autoRoutineActive = false;
+    let intervalDelay = 3500;
+    let isBlindMode = false;
+    let starSet = new Set(JSON.parse(localStorage.getItem('changchun_stars') || "[]"));
 
-    // DOM Elements
     const toast = document.getElementById('toast');
     const toastText = document.getElementById('toast-text');
-    const scenarioTabs = document.getElementById('scenario-tabs');
-    const statusDot = document.getElementById('status-dot');
-    const statusText = document.getElementById('status-text');
-    const timerDisplay = document.getElementById('timer-display');
-    const progressBar = document.getElementById('progress-bar');
-    const scenarioPlace = document.getElementById('scenario-place');
-    const scenarioTitle = document.getElementById('scenario-title');
-    const phaseBadge = document.getElementById('phase-badge');
-    const btnTogglePlay = document.getElementById('btn-toggle-play');
-    const btnPlayText = document.getElementById('btn-play-text');
+    const categoryTabs = document.getElementById('category-tabs');
+    const btnToggleAuto = document.getElementById('btn-toggle-auto');
+    const playBtnText = document.getElementById('play-btn-text');
     const playIcon = document.getElementById('play-icon');
-    const btnReset = document.getElementById('btn-reset');
-    const btnCopyAll = document.getElementById('btn-copy-all');
-    const sentenceCounter = document.getElementById('sentence-counter');
-    const dialogueList = document.getElementById('dialogue-list');
-    const scenarioTip = document.getElementById('scenario-tip');
-    const toastModal = document.getElementById('toast-modal');
-    const btnOpenToastModal = document.getElementById('btn-open-toast-modal');
-    const btnCloseToastModal = document.getElementById('btn-close-toast-modal');
-    const btnCloseToastModalBottom = document.getElementById('btn-close-toast-modal-bottom');
-    const mzList = document.getElementById('mz-list');
+    const autoStatusDot = document.getElementById('auto-status-dot');
+    const autoStatusText = document.getElementById('auto-status-text');
+    const currentIndexNum = document.getElementById('current-index-num');
+    const totalCountNum = document.getElementById('total-count-num');
+    const intervalSelect = document.getElementById('interval-select');
     const speedButtons = document.querySelectorAll('.speed-btn');
 
-    // Toast Utility
-    let toastTimeout = null;
+    const cardViewContainer = document.getElementById('card-view-container');
+    const listViewContainer = document.getElementById('list-view-container');
+    const btnModeCard = document.getElementById('btn-mode-card');
+    const btnModeList = document.getElementById('btn-mode-list');
+
+    const cardCategoryBadge = document.getElementById('card-category-badge');
+    const cardWordHanzi = document.getElementById('card-word-hanzi');
+    const cardWordPinyin = document.getElementById('card-word-pinyin');
+    const cardWordMeaning = document.getElementById('card-word-meaning');
+    const cardSentencePinyin = document.getElementById('card-sentence-pinyin');
+    const cardSentenceHanzi = document.getElementById('card-sentence-hanzi');
+    const cardSentenceMeaning = document.getElementById('card-sentence-meaning');
+
+    const btnPlayWord = document.getElementById('btn-play-word');
+    const btnPlaySentence = document.getElementById('btn-play-sentence');
+    const btnCopyCard = document.getElementById('btn-copy-card');
+    const btnPrevCard = document.getElementById('btn-prev-card');
+    const btnNextCard = document.getElementById('btn-next-card');
+    const btnReplayCard = document.getElementById('btn-replay-card');
+    const btnStarCard = document.getElementById('btn-star-card');
+
+    const btnToggleBlind = document.getElementById('btn-toggle-blind');
+    const blindIcon = document.getElementById('blind-icon');
+    const blindText = document.getElementById('blind-text');
+
+    const showmeModal = document.getElementById('showme-modal');
+    const showmeHanzi = document.getElementById('showme-hanzi');
+    const showmePinyin = document.getElementById('showme-pinyin');
+    const showmeKo = document.getElementById('showme-ko');
+    const btnOpenShowme = document.getElementById('btn-open-showme');
+
     function showToast(msg) {
       toastText.innerText = msg;
       toast.classList.remove('hidden');
-      clearTimeout(toastTimeout);
-      toastTimeout = setTimeout(() => {
-        toast.classList.add('hidden');
-      }, 2000);
+      setTimeout(() => toast.classList.add('hidden'), 2000);
     }
 
-    // Reliable Clipboard Copy for Mobile Safari & Iframe
-    function copyText(text, successMsg = "문장이 복사되었습니다") {
-      try {
-        const el = document.createElement('textarea');
-        el.value = text;
-        el.setAttribute('readonly', '');
-        el.style.position = 'absolute';
-        el.style.left = '-9999px';
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-        showToast(successMsg);
-      } catch (err) {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(() => showToast(successMsg));
-        }
-      }
-    }
-
-    // TTS Web Speech Synthesizer with iOS support
     function playTTS(text, speed = audioSpeed) {
       return new Promise((resolve) => {
         if ('speechSynthesis' in window) {
           window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(text);
-          utterance.lang = 'zh-CN';
-          utterance.rate = speed;
-          utterance.onend = () => resolve();
-          utterance.onerror = () => resolve();
-          window.speechSynthesis.speak(utterance);
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = 'zh-CN';
+          u.rate = speed;
+          u.onend = () => resolve();
+          u.onerror = () => resolve();
+          window.speechSynthesis.speak(u);
         } else {
           setTimeout(resolve, 1500);
         }
       });
     }
 
-    // Sleep helper
-    function delay(ms) {
-      return new Promise((resolve) => setTimeout(resolve, ms));
-    }
+    function delay(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
 
-    // Format Seconds MM:SS
-    function formatTime(s) {
-      const m = Math.floor(s / 60).toString().padStart(2, '0');
-      const sec = (s % 60).toString().padStart(2, '0');
-      return `${m}:${sec}`;
-    }
-
-    // Render Scenario Tabs
-    function renderTabs() {
-      scenarioTabs.innerHTML = '';
-      SCENARIOS.forEach((sc, idx) => {
-        const btn = document.createElement('button');
-        const isActive = idx === currentScenarioIdx;
-        btn.className = `shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 border ${
-          isActive 
-            ? 'bg-sky-500 text-white border-sky-400 font-bold shadow-sm shadow-sky-500/25' 
-            : 'bg-slate-800/60 text-slate-400 border-slate-800 active:bg-slate-800 active:text-slate-200'
-        }`;
-        btn.innerHTML = `<span>${sc.emoji}</span><span>${sc.id}. ${sc.title.split('&')[0].trim()}</span>`;
-        btn.onclick = () => {
-          selectScenario(idx);
-        };
-        scenarioTabs.appendChild(btn);
-      });
-    }
-
-    function selectScenario(idx) {
-      currentScenarioIdx = idx;
-      trainingPhase = 0;
-      activeSentenceIdx = 0;
-      renderTabs();
-      renderScenarioDetails();
-    }
-
-    // Render Active Dialogue Cards
-    function renderScenarioDetails() {
-      const sc = SCENARIOS[currentScenarioIdx];
-      scenarioPlace.innerText = sc.place;
-      scenarioTitle.innerText = sc.title;
-      scenarioTip.innerText = sc.tips;
-      sentenceCounter.innerText = `${activeSentenceIdx + 1} / 4 문장`;
-
-      const phaseNames = [
-        "1단계: 통으로 듣기",
-        "2단계: 섀도잉 발화",
-        "3단계: 실전 롤플레잉",
-        "4단계: 완주 성공"
-      ];
-      phaseBadge.innerText = phaseNames[trainingPhase] || phaseNames[0];
-
-      dialogueList.innerHTML = '';
-      sc.dialogue.forEach((item, idx) => {
-        const isCurrent = activeSentenceIdx === idx && isPlaying;
-        const isUser = item.speaker === "나";
-
-        const card = document.createElement('div');
-        card.id = `dialogue-item-${idx}`;
-        card.className = `p-3.5 rounded-xl border transition-all cursor-pointer relative overflow-hidden ${
-          isCurrent 
-            ? (isUser ? 'bg-sky-950/60 border-sky-500 shadow-md shadow-sky-500/10' : 'bg-emerald-950/60 border-emerald-500 shadow-md shadow-emerald-500/10')
-            : 'bg-slate-900/80 border-slate-800 active:border-slate-700'
-        }`;
-
-        card.innerHTML = `
-          ${isCurrent ? `<div class="absolute left-0 top-0 bottom-0 w-1 ${isUser ? 'bg-sky-400' : 'bg-emerald-400'}"></div>` : ''}
-          <div class="flex items-center justify-between mb-1.5 pl-0.5">
-            <div class="flex items-center gap-2">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isUser ? 'bg-sky-500 text-white' : 'bg-emerald-600 text-white'}">
-                ${item.speaker}
-              </span>
-              ${isCurrent ? `
-                <span class="text-[11px] font-semibold text-amber-400 flex items-center gap-1 animate-pulse">
-                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                  </svg>
-                  재생 중
-                </span>
-              ` : ''}
-            </div>
-
-            <div class="flex items-center gap-1">
-              <button class="btn-copy-item p-1.5 text-slate-400 active:text-sky-300 rounded active:bg-slate-800 transition-colors" title="복사">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-              </button>
-              <button class="btn-play-item p-1.5 text-slate-400 active:text-white rounded active:bg-slate-800 transition-colors" title="소리 듣기">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div class="pl-0.5 select-text">
-            <div class="text-[11px] text-sky-400 font-mono tracking-tight leading-relaxed">${item.pinyin}</div>
-            <div class="text-base font-semibold text-slate-100 mt-0.5 leading-snug tracking-wide">${item.hanzi}</div>
-            <div class="text-xs text-slate-400 mt-1 leading-relaxed">${item.meaning}</div>
-          </div>
-        `;
-
-        // Card Click Handler
-        card.onclick = (e) => {
-          if (e.target.closest('.btn-copy-item') || e.target.closest('.btn-play-item')) return;
-          activeSentenceIdx = idx;
-          renderScenarioDetails();
-          playTTS(item.hanzi);
-        };
-
-        // Copy Item
-        card.querySelector('.btn-copy-item').onclick = (e) => {
-          e.stopPropagation();
-          copyText(`${item.hanzi}\\n${item.pinyin}\\n(${item.meaning})`, `"${item.hanzi}" 문장이 복사되었습니다`);
-        };
-
-        // Play Item TTS
-        card.querySelector('.btn-play-item').onclick = (e) => {
-          e.stopPropagation();
-          activeSentenceIdx = idx;
-          renderScenarioDetails();
-          playTTS(item.hanzi);
-        };
-
-        dialogueList.appendChild(card);
-      });
-    }
-
-    // Auto Coaching Routine Execution Loop
-    async function runAutoCoach() {
-      autoRoutineActive = true;
-
-      while (isPlaying && remainingSeconds > 0) {
-        const sentences = SCENARIOS[currentScenarioIdx].dialogue;
-
-        // PHASE 0: Listen All Sentences
-        if (trainingPhase === 0) {
-          for (let i = 0; i < sentences.length; i++) {
-            if (!isPlaying) return;
-            activeSentenceIdx = i;
-            renderScenarioDetails();
-            await playTTS(sentences[i].hanzi, 0.9);
-            await delay(1200);
-          }
-          if (!isPlaying) return;
-          trainingPhase = 1;
-          activeSentenceIdx = 0;
-          renderScenarioDetails();
-        }
-
-        // PHASE 1: Shadowing Repeat
-        else if (trainingPhase === 1) {
-          for (let i = 0; i < sentences.length; i++) {
-            if (!isPlaying) return;
-            activeSentenceIdx = i;
-            renderScenarioDetails();
-
-            // 1. Slow Demonstration
-            await playTTS(sentences[i].hanzi, 0.75);
-            if (!isPlaying) return;
-
-            // 2. Countdown pause for user speaking
-            statusText.innerText = "🎙️ 소리 내어 따라 말하세요!";
-            await delay(3000);
-            if (!isPlaying) return;
-
-            // 3. Re-play normal
-            statusText.innerText = "자동 코칭 트레이닝 진행 중";
-            await playTTS(sentences[i].hanzi, 0.9);
-            await delay(1200);
-          }
-          if (!isPlaying) return;
-          trainingPhase = 2;
-          activeSentenceIdx = 0;
-          renderScenarioDetails();
-        }
-
-        // PHASE 2: Roleplay Simulation
-        else if (trainingPhase === 2) {
-          for (let i = 0; i < sentences.length; i++) {
-            if (!isPlaying) return;
-            activeSentenceIdx = i;
-            renderScenarioDetails();
-
-            if (sentences[i].speaker === "나") {
-              statusText.innerText = "🎙️ 내 차례! 답변해보세요!";
-              await delay(3200);
-              if (!isPlaying) return;
-              await playTTS(sentences[i].hanzi, 0.9);
-            } else {
-              statusText.innerText = "상대방의 답변을 잘 들어보세요";
-              await playTTS(sentences[i].hanzi, 0.9);
-            }
-            await delay(1500);
-          }
-          if (!isPlaying) return;
-          trainingPhase = 3;
-          renderScenarioDetails();
-        }
-
-        // PHASE 3: Next Scenario Loop
-        else if (trainingPhase === 3) {
-          statusText.innerText = "🎉 1개 세션 완주! 다음 상황으로 이동합니다.";
-          await delay(3000);
-          if (!isPlaying) return;
-          currentScenarioIdx = (currentScenarioIdx + 1) % SCENARIOS.length;
-          trainingPhase = 0;
-          activeSentenceIdx = 0;
-          renderTabs();
-          renderScenarioDetails();
-        }
+    function copyText(text, msg = "복사되었습니다") {
+      try {
+        const el = document.createElement('textarea');
+        el.value = text;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        showToast(msg);
+      } catch (e) {
+        if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => showToast(msg));
       }
-
-      autoRoutineActive = false;
     }
 
-    // Toggle Play / Pause
-    function togglePlay() {
-      isPlaying = !isPlaying;
+    function openShowMe() {
+      if (filteredList.length === 0) return;
+      const item = filteredList[currentIndex];
+      showmeHanzi.innerText = item.senZh;
+      showmePinyin.innerText = item.senPy;
+      showmeKo.innerText = `"${item.senKo}"`;
+      showmeModal.classList.remove('hidden');
+    }
 
-      if (isPlaying) {
-        btnTogglePlay.className = "flex-1 py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99] bg-amber-500 active:bg-amber-600 text-slate-950";
-        btnPlayText.innerText = "일시 정지";
-        playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
-        statusDot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-ping";
-        statusText.innerText = "자동 코칭 트레이닝 진행 중";
+    function closeShowMe() { showmeModal.classList.add('hidden'); }
 
-        // Start Countdown Timer
-        if (!timerInterval) {
-          timerInterval = setInterval(() => {
-            if (remainingSeconds > 0) {
-              remainingSeconds--;
-              timerDisplay.innerText = formatTime(remainingSeconds);
-              const pct = Math.min(100, Math.round(((600 - remainingSeconds) / 600) * 100));
-              progressBar.style.width = `${pct}%`;
-            } else {
-              resetTraining();
-            }
-          }, 1000);
-        }
-
-        runAutoCoach();
-
+    function toggleStar(item) {
+      if (starSet.has(item.id)) {
+        starSet.delete(item.id);
+        showToast("즐겨찾기에서 해제되었습니다");
       } else {
-        pauseTraining();
+        starSet.add(item.id);
+        showToast("★ 즐겨찾기에 추가되었습니다");
+      }
+      localStorage.setItem('changchun_stars', JSON.stringify([...starSet]));
+      updateCardStarUI();
+      if (currentCategory === "★즐겨찾기") applyCategoryFilter();
+    }
+
+    function updateCardStarUI() {
+      if (filteredList.length === 0) return;
+      const item = filteredList[currentIndex];
+      const isStarred = starSet.has(item.id);
+      btnStarCard.className = `p-1 rounded-lg text-sm transition-all ${
+        isStarred ? 'text-amber-400 font-bold scale-110' : 'text-slate-600 hover:text-slate-400'
+      }`;
+    }
+
+    function applyCategoryFilter() {
+      if (currentCategory === "전체") {
+        filteredList = [...VOCAB_DATA];
+      } else if (currentCategory === "★즐겨찾기") {
+        filteredList = VOCAB_DATA.filter(item => starSet.has(item.id));
+      } else {
+        filteredList = VOCAB_DATA.filter(item => item.cat === currentCategory);
+      }
+      currentIndex = 0;
+      updateCardView();
+      renderListView();
+    }
+
+    function renderCategories() {
+      categoryTabs.innerHTML = '';
+      CATEGORIES.forEach(cat => {
+        const btn = document.createElement('button');
+        const isActive = cat === currentCategory;
+        btn.className = `shrink-0 px-3 py-1 rounded-xl text-xs font-semibold transition-all ${
+          isActive ? 'bg-sky-500 text-white font-bold shadow-sm' : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+        }`;
+        if (cat === "★즐겨찾기") {
+          btn.innerText = `★ 즐겨찾기 (${starSet.size})`;
+          btn.className += ' text-amber-300';
+        } else {
+          btn.innerText = cat;
+        }
+        btn.onclick = () => {
+          currentCategory = cat;
+          applyCategoryFilter();
+          renderCategories();
+        };
+        categoryTabs.appendChild(btn);
+      });
+    }
+
+    function updateCardView() {
+      if (filteredList.length === 0) {
+        cardWordHanzi.innerText = "데이터 없음";
+        cardWordPinyin.innerText = "";
+        cardWordMeaning.innerText = "즐겨찾기 항목이 비어 있습니다.";
+        cardSentencePinyin.innerText = "";
+        cardSentenceHanzi.innerText = "별표(★)를 눌러 원하는 문장을 등록하세요.";
+        cardSentenceMeaning.innerText = "";
+        currentIndexNum.innerText = 0;
+        totalCountNum.innerText = 0;
+        return;
+      }
+      const item = filteredList[currentIndex];
+      cardCategoryBadge.innerText = item.cat;
+      cardWordHanzi.innerText = item.word;
+      cardWordPinyin.innerText = item.pinyin;
+      cardWordMeaning.innerText = item.wordKo;
+      cardSentencePinyin.innerText = item.senPy;
+      cardSentenceHanzi.innerText = item.senZh;
+      cardSentenceMeaning.innerText = `"${item.senKo}"`;
+      currentIndexNum.innerText = currentIndex + 1;
+      totalCountNum.innerText = filteredList.length;
+      updateCardStarUI();
+    }
+
+    function renderListView() {
+      listViewContainer.innerHTML = '';
+      filteredList.forEach((item, idx) => {
+        const isCurrent = idx === currentIndex;
+        const isStarred = starSet.has(item.id);
+        const row = document.createElement('div');
+        row.className = `p-3 rounded-2xl border transition-all cursor-pointer ${
+          isCurrent ? 'bg-slate-900 border-sky-500 shadow-md' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+        }`;
+        row.innerHTML = `
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-[10px] font-bold text-amber-400 bg-amber-950/40 border border-amber-800/40 px-2 py-0.5 rounded">
+              ${item.word} (${item.pinyin}) - ${item.wordKo}
+            </span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs ${isStarred ? 'text-amber-400' : 'text-slate-600'}">★</span>
+              <span class="text-[10px] text-slate-500">${item.cat}</span>
+            </div>
+          </div>
+          <div class="text-xs font-mono text-emerald-400 mt-1">${item.senPy}</div>
+          <div class="text-sm font-bold text-slate-100">${item.senZh}</div>
+          <div class="text-xs text-sky-300 mt-0.5">${item.senKo}</div>
+        `;
+        row.onclick = () => {
+          currentIndex = idx;
+          updateCardView();
+          renderListView();
+          playTTS(item.senZh);
+        };
+        listViewContainer.appendChild(row);
+      });
+    }
+
+    async function runAutoRoutine() {
+      while (isAutoPlaying) {
+        if (filteredList.length === 0) { stopAutoPlay(); return; }
+        const item = filteredList[currentIndex];
+        updateCardView();
+        renderListView();
+
+        autoStatusText.innerText = `🎙️ [단어] ${item.word}`;
+        await playTTS(item.word, audioSpeed);
+        if (!isAutoPlaying) return;
+        await delay(600);
+
+        autoStatusText.innerText = `🗣️ [문장] 따라하세요!`;
+        await playTTS(item.senZh, audioSpeed);
+        if (!isAutoPlaying) return;
+
+        await delay(intervalDelay);
+        if (!isAutoPlaying) return;
+
+        currentIndex = (currentIndex + 1) % filteredList.length;
       }
     }
 
-    function pauseTraining() {
-      isPlaying = false;
+    function toggleAutoPlay() {
+      if (filteredList.length === 0) {
+        showToast("재생할 카드가 없습니다");
+        return;
+      }
+      isAutoPlaying = !isAutoPlaying;
+
+      if (isAutoPlaying) {
+        btnToggleAuto.className = "w-full py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99] bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20";
+        playBtnText.innerText = "일시 정지";
+        playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+        autoStatusDot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-ping";
+        autoStatusText.innerText = "자동 섀도잉 루프 진행 중";
+        runAutoRoutine();
+      } else {
+        stopAutoPlay();
+      }
+    }
+
+    function stopAutoPlay() {
+      isAutoPlaying = false;
       window.speechSynthesis && window.speechSynthesis.cancel();
-      clearInterval(timerInterval);
-      timerInterval = null;
-
-      btnTogglePlay.className = "flex-1 py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99] bg-sky-500 active:bg-sky-600 text-white shadow-md shadow-sky-500/20";
-      btnPlayText.innerText = "▶ 10분 자동 트레이닝 시작";
+      btnToggleAuto.className = "w-full py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99] bg-sky-500 text-white shadow-lg shadow-sky-500/20";
+      playBtnText.innerText = "▶ 유튜브 스타일 자동 섀도잉 시작";
       playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
-      statusDot.className = "w-2 h-2 rounded-full bg-slate-500";
-      statusText.innerText = "일시 정지됨 (다시 누르면 계속됩니다)";
-      renderScenarioDetails();
+      autoStatusDot.className = "w-2 h-2 rounded-full bg-slate-600";
+      autoStatusText.innerText = "정지됨";
     }
 
-    function resetTraining() {
-      pauseTraining();
-      remainingSeconds = 600;
-      trainingPhase = 0;
-      activeSentenceIdx = 0;
-      timerDisplay.innerText = "10:00";
-      progressBar.style.width = "0%";
-      statusText.innerText = "준비 완료 (재생 버튼을 누르세요)";
-      renderScenarioDetails();
-    }
-
-    // Copy All Dialogue Action
-    btnCopyAll.onclick = () => {
-      const activeSc = SCENARIOS[currentScenarioIdx];
-      const fullText = activeSc.dialogue.map(
-        (d) => `[${d.speaker}]\\n${d.hanzi}\\n${d.pinyin}\\n${d.meaning}`
-      ).join("\\n\\n");
-      copyText(fullText, "전체 대화 4문장이 복사되었습니다");
+    btnToggleBlind.onclick = () => {
+      isBlindMode = !isBlindMode;
+      if (isBlindMode) {
+        document.body.classList.add('blind-active');
+        btnToggleBlind.className = "px-2 py-1 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 border border-amber-400 font-bold transition-all flex items-center gap-1";
+        blindIcon.innerText = "👀";
+        blindText.innerText = "노룩 ON";
+        showToast("노룩 모드 활성화: 한국어만 보고 먼저 말해보세요!");
+      } else {
+        document.body.classList.remove('blind-active');
+        btnToggleBlind.className = "px-2 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700 hover:text-amber-300 transition-all flex items-center gap-1";
+        blindIcon.innerText = "🙈";
+        blindText.innerText = "노룩";
+      }
     };
 
-    // Speed Setting Buttons
-    speedButtons.forEach((btn) => {
+    btnToggleAuto.onclick = toggleAutoPlay;
+    btnPlayWord.onclick = (e) => { e.stopPropagation(); playTTS(filteredList[currentIndex].word); };
+    btnPlaySentence.onclick = (e) => { e.stopPropagation(); playTTS(filteredList[currentIndex].senZh); };
+
+    btnReplayCard.onclick = () => {
+      if (filteredList.length === 0) return;
+      const item = filteredList[currentIndex];
+      playTTS(item.word).then(() => delay(500)).then(() => playTTS(item.senZh));
+    };
+
+    btnPrevCard.onclick = () => {
+      if (filteredList.length === 0) return;
+      currentIndex = (currentIndex > 0) ? currentIndex - 1 : filteredList.length - 1;
+      updateCardView(); renderListView(); playTTS(filteredList[currentIndex].senZh);
+    };
+
+    btnNextCard.onclick = () => {
+      if (filteredList.length === 0) return;
+      currentIndex = (currentIndex + 1) % filteredList.length;
+      updateCardView(); renderListView(); playTTS(filteredList[currentIndex].senZh);
+    };
+
+    btnStarCard.onclick = () => {
+      if (filteredList.length === 0) return;
+      toggleStar(filteredList[currentIndex]);
+      renderCategories();
+    };
+
+    btnOpenShowme.onclick = openShowMe;
+
+    btnCopyCard.onclick = () => {
+      if (filteredList.length === 0) return;
+      const item = filteredList[currentIndex];
+      const copyStr = `[단어] ${item.word} (${item.pinyin}) - ${item.wordKo}\n[실전문장] ${item.senZh}\n${item.senPy}\n(${item.senKo})`;
+      copyText(copyStr, "단어 & 문장이 복사되었습니다");
+    };
+
+    btnModeCard.onclick = () => {
+      btnModeCard.className = "px-2 py-1 rounded font-bold bg-sky-500 text-white transition-all";
+      btnModeList.className = "px-2 py-1 rounded text-slate-400 hover:text-slate-200 transition-all";
+      cardViewContainer.classList.remove('hidden');
+      listViewContainer.classList.add('hidden');
+    };
+
+    btnModeList.onclick = () => {
+      btnModeList.className = "px-2 py-1 rounded font-bold bg-sky-500 text-white transition-all";
+      btnModeCard.className = "px-2 py-1 rounded text-slate-400 hover:text-slate-200 transition-all";
+      cardViewContainer.classList.add('hidden');
+      listViewContainer.classList.remove('hidden');
+    };
+
+    intervalSelect.onchange = (e) => { intervalDelay = parseInt(e.target.value); };
+
+    speedButtons.forEach(btn => {
       btn.onclick = () => {
-        speedButtons.forEach(b => {
-          b.className = "speed-btn px-2 py-0.5 rounded text-[11px] font-semibold text-slate-400";
-        });
-        btn.className = "speed-btn px-2 py-0.5 rounded text-[11px] font-semibold bg-sky-500 text-white";
+        speedButtons.forEach(b => b.className = "speed-btn px-1.5 py-0.5 rounded text-slate-400");
+        btn.className = "speed-btn px-1.5 py-0.5 rounded bg-sky-500 text-white font-bold";
         audioSpeed = parseFloat(btn.dataset.speed);
       };
     });
 
-    // Populate MZ Toasts in Modal
-    function renderMzToasts() {
-      mzList.innerHTML = '';
-      MZ_TOASTS.forEach((toast) => {
-        const card = document.createElement('div');
-        card.className = "bg-slate-950 p-3 rounded-xl border border-slate-800 flex flex-col gap-1";
-        card.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold text-amber-400 bg-amber-950/50 px-2 py-0.5 rounded border border-amber-800/40">
-              ${toast.tag}
-            </span>
-            <div class="flex items-center gap-1">
-              <button class="btn-copy-mz p-1 text-slate-400 active:text-sky-300 rounded" title="복사">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-              </button>
-              <button class="btn-play-mz p-1 text-slate-400 active:text-white rounded" title="발음 듣기">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div class="text-sm font-bold text-slate-100 mt-0.5 select-text">${toast.hanzi}</div>
-          <div class="text-xs text-sky-400 font-mono select-text">${toast.pinyin}</div>
-          <div class="text-xs text-slate-400 select-text">${toast.meaning}</div>
-        `;
-
-        card.querySelector('.btn-copy-mz').onclick = () => {
-          copyText(`${toast.hanzi} (${toast.pinyin})\\n${toast.meaning}`, `"${toast.hanzi}" 건배사가 복사되었습니다`);
-        };
-
-        card.querySelector('.btn-play-mz').onclick = () => {
-          playTTS(toast.hanzi);
-        };
-
-        mzList.appendChild(card);
-      });
-    }
-
-    // Modal Events
-    btnOpenToastModal.onclick = () => {
-      toastModal.classList.remove('hidden');
-    };
-    btnCloseToastModal.onclick = () => {
-      toastModal.classList.add('hidden');
-    };
-    btnCloseToastModalBottom.onclick = () => {
-      toastModal.classList.add('hidden');
-    };
-
-    // Controller Buttons
-    btnTogglePlay.onclick = togglePlay;
-    btnReset.onclick = resetTraining;
-
-    // Initialization on Page Load
     window.addEventListener('DOMContentLoaded', () => {
-      renderTabs();
-      renderScenarioDetails();
-      renderMzToasts();
+      renderCategories();
+      updateCardView();
+      renderListView();
     });
   </script>
 </body>
 </html>
 """
 
-components.html(HTML_CONTENT, height=920, scrolling=True)
+components.html(HTML_CONTENT, height=890, scrolling=True)
